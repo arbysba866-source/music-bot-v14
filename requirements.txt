@@ -1,0 +1,5 @@
+discord.py[voice]
+yt-dlp
+youtube-search
+PyNaCl
+requests
