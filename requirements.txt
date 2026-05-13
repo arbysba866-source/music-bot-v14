@@ -1,5 +1,7 @@
-discord.py[voice]
+discord.py[voice]==2.3.2
 yt-dlp
 youtube-search
 PyNaCl
 requests
+youtube-search-python
+ffmpeg-python
