@@ -212,7 +212,7 @@ class Music(commands.Cog):
                 color=0xFF4757
             ))
             return
-        elif self.voice_client.channel != ctx.author.voice.channel:
+        elif ctx.voice_client and ctx.voice_client.channel != ctx.author.voice.channel:
             await ctx.voice_client.move_to(ctx.author.voice.channel)
 
         async with ctx.typing():
