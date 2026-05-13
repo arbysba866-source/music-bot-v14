@@ -82,28 +82,17 @@ def get_duration(time):
 
 
 def build_now_playing_embed(data: dict, url: str, requester) -> Embed:
-    """
-    Builds the purple neon 'Now Playing' embed
-    matching the AWS Services visual style.
-    """
     title    = data.get('title', 'Unknown')
     duration = get_duration(data.get('duration'))
     thumb    = data.get('thumbnail', '')
 
-    # ── Waveform progress bar visual ──
-    progress_bar = f"```\n{WAVEFORM}\n```"
+    embed = Embed(color=EMBED_COLOR)
 
-    embed = Embed(
-        color=EMBED_COLOR
-    )
-
-    # Header row
     embed.set_author(
         name="▶  NOW PLAYING",
-        icon_url="https://cdn.discordapp.com/attachments/1467293992478838805/1503604157083422760/AWS.png?ex=6a049cbe&is=6a034b3e&hm=77cacdfa8a74465d92ae8e3b772e63bcb4e06989028063b5520a377c8711f1f2&"  # fallback icon
+        icon_url="https://cdn.discordapp.com/attachments/1467293992478838805/1503604157083422760/AWS.png?ex=6a049cbe&is=6a034b3e&hm=77cacdfa8a74465d92ae8e3b772e63bcb4e06989028063b5520a377c8711f1f2&"
     )
 
-    # Song info block
     embed.add_field(
         name=f"🎵  {title}",
         value=(
@@ -117,7 +106,6 @@ def build_now_playing_embed(data: dict, url: str, requester) -> Embed:
         inline=False
     )
 
-    # Footer row: requester + volume
     embed.set_footer(
         text=f"Requested by  {requester.name}   🔊 100%",
         icon_url=requester.display_avatar.url
@@ -152,12 +140,10 @@ class Music(commands.Cog):
             'thumbnail': ytdl_info.get('thumbnail')
         }
 
-    # ── Ready ──────────────────────────────────────────────
     @commands.Cog.listener()
     async def on_ready(self):
         print(f"✅  Connected as {self.bot.user.name}")
 
-    # ── Repeat ────────────────────────────────────────────
     @commands.command(name='repeat', aliases=['r', 'loop'])
     async def repeat_command(self, ctx: commands.Context):
         if ctx.author.voice is None:
@@ -165,7 +151,7 @@ class Music(commands.Cog):
         if ctx.guild.get_member(self.bot.user.id) not in ctx.author.voice.channel.members:
             return
 
-        if self.voice_client.is_playing() or self.voice_client.is_paused():
+        if self.voice_client and (self.voice_client.is_playing() or self.voice_client.is_paused()):
             if not self.data:
                 await ctx.reply(embed=build_simple_embed("**⚠️  An error occurred. Please contact the developer.**"))
                 return
@@ -188,7 +174,6 @@ class Music(commands.Cog):
         else:
             await ctx.reply(embed=build_simple_embed("**:x:  No song is currently playing.**", color=0xFF4757))
 
-    # ── Play ──────────────────────────────────────────────
     @commands.command(name='play', aliases=['p', 'ش'])
     async def play_command(self, ctx: commands.Context, *, message: Optional[str]):
         if ctx.author.voice is None:
@@ -206,14 +191,17 @@ class Music(commands.Cog):
 
         if not ctx.voice_client:
             self.voice_client = await ctx.author.voice.channel.connect(self_deaf=True)
-        elif ctx.voice_client and ctx.voice_client.is_playing() or ctx.voice_client and ctx.voice_client.is_paused():
+        elif ctx.voice_client.is_playing() or ctx.voice_client.is_paused():
             await ctx.reply(embed=build_simple_embed(
                 "**:x:  Music Bot is currently in use. Please wait. ⏱️**",
                 color=0xFF4757
             ))
             return
-        elif ctx.voice_client and ctx.voice_client.channel != ctx.author.voice.channel:
+        elif ctx.voice_client.channel != ctx.author.voice.channel:
             await ctx.voice_client.move_to(ctx.author.voice.channel)
+            self.voice_client = ctx.voice_client
+        else:
+            self.voice_client = ctx.voice_client
 
         async with ctx.typing():
             if not is_youtube_link(message):
@@ -245,7 +233,6 @@ class Music(commands.Cog):
             await ctx.reply(embed=build_simple_embed("**:x:  Cannot fetch this song.**", color=0xFF4757))
             return
 
-        # ── Send the purple neon Now Playing embed ──
         embed = build_now_playing_embed(self.data, url, ctx.author)
         await ctx.send(embed=embed)
 
@@ -262,7 +249,6 @@ class Music(commands.Cog):
             self.data = {}
             return
 
-    # ── Skip ──────────────────────────────────────────────
     @commands.command(name='skip', aliases=['s'])
     async def skip_command(self, ctx: commands.Context):
         if ctx.author.voice is None:
@@ -270,7 +256,7 @@ class Music(commands.Cog):
         if ctx.guild.get_member(self.bot.user.id) not in ctx.author.voice.channel.members:
             return
 
-        if self.voice_client.is_playing() or self.voice_client.is_paused():
+        if self.voice_client and (self.voice_client.is_playing() or self.voice_client.is_paused()):
             if not self.data:
                 await ctx.reply(embed=build_simple_embed("**⚠️  An error occurred.**"), delete_after=10)
             else:
@@ -291,7 +277,6 @@ class Music(commands.Cog):
         else:
             await ctx.reply(embed=build_simple_embed("**:x:  There is no song to skip.**", color=0xFF4757))
 
-    # ── Stop ──────────────────────────────────────────────
     @commands.command(name='stop', aliases=['leave', 'disconnect'])
     async def stop_command(self, ctx: commands.Context):
         if ctx.author.voice is None:
@@ -299,7 +284,7 @@ class Music(commands.Cog):
         if ctx.guild.get_member(self.bot.user.id) not in ctx.author.voice.channel.members:
             return
 
-        if self.voice_client.is_playing() or self.voice_client.is_paused():
+        if self.voice_client and (self.voice_client.is_playing() or self.voice_client.is_paused()):
             if not self.data:
                 await ctx.reply(embed=build_simple_embed("**⚠️  An error occurred.**"), delete_after=10)
             else:
@@ -328,7 +313,6 @@ class Music(commands.Cog):
                     color=0xFF4757
                 ))
 
-    # ── Voice state listener ───────────────────────────────
     @commands.Cog.listener()
     async def on_voice_state_update(self, member: Member, before: VoiceState, after: VoiceState):
         if member.id == self.bot.user.id:
@@ -339,11 +323,9 @@ class Music(commands.Cog):
                 self.voice_client = utils.get(self.bot.voice_clients, guild=member.guild)
 
 
-# ── Setup & run ───────────────────────────────────────────
-
 async def on_setup():
     await bot.add_cog(Music(bot))
 
 bot.setup_hook = on_setup
 
-bot.run(getenv("DISCORD_TOKEN")) 
+bot.run(getenv("DISCORD_TOKEN"))
