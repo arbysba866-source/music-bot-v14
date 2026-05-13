@@ -38,7 +38,7 @@ bot = commands.Bot(
 
 
 ytdl_format_options = {
-    'format': 'worstaudio',
+    'format': 'bestaudio/best',
     'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
     'restrictfilenames': True,
     'noplaylist': True,
