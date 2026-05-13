@@ -206,7 +206,7 @@ class Music(commands.Cog):
 
         if not ctx.voice_client:
             self.voice_client = await ctx.author.voice.channel.connect(self_deaf=True)
-        elif self.voice_client.is_playing() or self.voice_client.is_paused():
+        elif ctx.voice_client and ctx.voice_client.is_playing() or ctx.voice_client and ctx.voice_client.is_paused():
             await ctx.reply(embed=build_simple_embed(
                 "**:x:  Music Bot is currently in use. Please wait. ⏱️**",
                 color=0xFF4757
